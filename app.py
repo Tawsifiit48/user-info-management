@@ -35,7 +35,7 @@ def health():
     health_status = check_health() 
     return jsonify({"status": health_status})
 
-@app.route('/users', methods=['POST'])
+@app.route('/api/users', methods=['POST'])
 def create_user():
     data = request.get_json()
 
@@ -47,19 +47,21 @@ def create_user():
 
     return jsonify({"id": user_id}), 201  
 
-def add_tags(user_id):
-    tags_data = request.get_json()  # Parse the incoming JSON request
+
+@app.route('/api/users/<int:user_id>/tags', methods=['POST'])
+def add_tags_route(user_id):
+    tags_data = request.get_json()  
     tags = tags_data.get('tags', [])
     expiry = tags_data.get('expiry', 0)
 
-    if add_tags(user_id, tags, expiry):
+    if add_tags(user_id, tags, expiry):  
         return jsonify({"message": "Tags added successfully"}), 200
     else:
         return jsonify({"message": "Error adding tags"}), 400
 
 
 
-@app.route('/users', methods=['GET'])
+@app.route('/api/users', methods=['GET'])
 def get_users():
     tags_param = request.args.get("tags")
     if not tags_param:
