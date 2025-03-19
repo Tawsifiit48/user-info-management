@@ -1,4 +1,5 @@
 from connection import get_connection, release_connection
+from psycopg2.extras import execute_values
 import time
 import hashlib
 import os
@@ -67,6 +68,7 @@ def get_user_by_id(user_id):
         cur.execute(query, (user_id,))
         
         result = cur.fetchone()
+        cur.close()
         release_connection(conn)
         
         if result:
@@ -80,11 +82,12 @@ def get_user_by_id(user_id):
         else:
             logger.error(f"Error: No user found with userId: {user_id}")
             release_connection(conn)
-            return None
+            return {"error": "User not found"}
     except Exception as e:
+        release_connection(conn)
         logger.error(f"Error occurred while fetching user: {e}")
         
-        return None
+        return {"error": "Internal server error"}
 
 
 def add_tags_db(user_id, tags, expiry):
@@ -93,19 +96,22 @@ def add_tags_db(user_id, tags, expiry):
 
     try:
         logger.info(f"Adding/updating tags for userId: {user_id}, tags: {tags}, expiry: {expiry}")
-
+        batch_size = 1000
         with conn.cursor() as cursor:
-            for tag in tags:
-                cursor.execute(
-                    """
+            for i in range(0, len(tags), batch_size):
+                batch = tags[i: i + batch_size]
+                values = [(user_id, tag, expiry) for tag in batch]
+
+                insert_query = """
                     INSERT INTO user_tags (user_id, tag, expiry) 
-                    VALUES (%s, %s, %s)
+                    VALUES %s
                     ON CONFLICT (user_id, tag) 
                     DO UPDATE SET expiry = EXCLUDED.expiry;
-                    """,
-                    (user_id, tag, expiry)
-                )
-        conn.commit()
+                """
+                execute_values(cursor, insert_query, values)
+            conn.commit()
+
+
         release_connection(conn)
         return True
     except Exception as e:
