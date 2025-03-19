@@ -11,22 +11,28 @@ from connection import init_pool
 
 from utils.logger_config import setup_logger
 
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from database import db, User, UserTags
+from config_loader import CONFIG
+
+
 logger = setup_logger('app')
 
 app = Flask(__name__)
 
 CORS(app)
 
-def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), "config.json")
-    
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Config file not found at {config_path}")
-    
-    with open(config_path, "r") as file:
-        config_dict = json.load(file)
-    
-    return config_dict
+db_url = (
+    f"postgresql://{CONFIG['username']}:{CONFIG['password']}"
+    f"@{CONFIG['host']}:{CONFIG['port']}/{CONFIG['dbname']}"
+)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+migrate = Migrate(app, db)
 
 
 
@@ -88,13 +94,12 @@ if __name__ == '__main__':
 
     
 
-    CONFIG = load_config()  
     conninfo = (
         f"host={CONFIG['host']} "
         f"port={CONFIG['port']} "
         f"user={CONFIG['username']} "
         f"password={CONFIG['password']} "
-        f"dbname={CONFIG['db_name']}"
+        f"dbname={CONFIG['dbname']}"
     )
     init_pool(conninfo)
     run_cleanup_thread()
