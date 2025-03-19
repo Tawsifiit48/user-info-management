@@ -7,12 +7,12 @@ def add_user(firstName, lastName, password, phone):
 
 def add_tags(user_id, tags, expiry):
     from query import add_tags_db
-    add_tags_db(user_id, tags, expiry)
+    return add_tags_db(user_id, tags, expiry)
 
 def get_users_by_tags(tags):
     from query import get_users_by_tags_from_db
-    get_users_by_tags_from_db(tags)
+    return get_users_by_tags_from_db(tags)
 
 def cleanup_expired_tags():
     from query import cleanup_expired_tags_from_db
-    cleanup_expired_tags_from_db()
+    return cleanup_expired_tags_from_db()

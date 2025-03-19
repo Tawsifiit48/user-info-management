@@ -114,7 +114,7 @@ def add_tags_db(user_id, tags, expiry):
         release_connection(conn)
         return False
 
-def get_users_by_tags(tags):
+def get_users_by_tags_from_db(tags):
     conn = get_connection()
 
     try:
@@ -122,12 +122,14 @@ def get_users_by_tags(tags):
         logger.info(f"Fetching users with tags: {tags}")
         with conn.cursor() as cursor:
             query = """
-                SELECT u.id, u.first_name || ' ' || u.last_name AS name, array_agg(ut.tag) AS tags
+                SELECT u.userid, u.firstname  || ' ' || u.lastname  AS name, array_agg(ut.tag) AS tags
                 FROM users u
-                JOIN user_tags ut ON u.id = ut.user_id
+                JOIN user_tags ut ON u.userid = ut.user_id
                 WHERE ut.tag = ANY(%s)
-                GROUP BY u.id;
+                GROUP BY u.userid;
+
             """
+            print(query)
             cursor.execute(query, (tags,))
             users = cursor.fetchall()
             release_connection(conn)

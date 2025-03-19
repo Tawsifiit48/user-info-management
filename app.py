@@ -50,6 +50,7 @@ def create_user():
 
 @app.route('/api/users/<int:user_id>/tags', methods=['POST'])
 def add_tags_route(user_id):
+    print(user_id, request.get_json())
     tags_data = request.get_json()  
     tags = tags_data.get('tags', [])
     expiry = tags_data.get('expiry', 0)
